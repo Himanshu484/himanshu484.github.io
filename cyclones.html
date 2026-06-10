@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Topological Detection and Tracking of Cyclones and Anticyclones — Himanshu Yadav</title>
+<meta name="description" content="Persistent homology applied to North Atlantic sea-level pressure anomalies (1948–2023): detecting and tracking cyclonic and anticyclonic structures as topological loops." />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1a18;
+    --ink-muted: #5c5c54;
+    --ink-faint: #9a9a90;
+    --paper: #f7f5f0;
+    --paper-warm: #ede9e0;
+    --accent: #2d4a3e;
+    --accent-light: #e8f0ec;
+    --cyclone: #1f4e79;     /* low-pressure blue, from the paper's anomaly maps */
+    --anticyclone: #9a3b2e; /* high-pressure red */
+    --rule: rgba(26,26,24,0.12);
+    --serif: 'EB Garamond', Georgia, serif;
+    --mono: 'DM Mono', 'Courier New', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--serif);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 18px;
+    line-height: 1.75;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px;
+    height: 56px;
+  }
+  .nav-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 32px; }
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-muted);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  main { padding-top: 56px; }
+  .container { max-width: 860px; margin: 0 auto; padding-left: 48px; padding-right: 48px; }
+
+  section { padding-top: 64px; padding-bottom: 64px; border-bottom: 1px solid var(--rule); }
+  section:last-of-type { border-bottom: none; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 36px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+
+  h2 { font-size: 1.3rem; font-weight: 500; line-height: 1.4; margin-bottom: 10px; }
+  p { color: var(--ink-muted); margin-bottom: 1em; }
+  p:last-child { margin-bottom: 0; }
+  em { color: var(--ink); }
+
+  /* ── PAPER HERO ── */
+  #top { padding-top: 88px; padding-bottom: 64px; }
+  .crumb {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .crumb a { color: var(--accent); text-decoration: none; }
+  .crumb a:hover { opacity: 0.7; }
+  .paper-title {
+    font-size: 2.6rem;
+    font-weight: 400;
+    line-height: 1.18;
+    margin-bottom: 24px;
+  }
+  .paper-title em { font-style: italic; color: var(--accent); }
+  .paper-authors { font-size: 1.02rem; color: var(--ink); margin-bottom: 6px; }
+  .paper-authors strong { font-weight: 500; }
+  .paper-affil {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    line-height: 1.9;
+    margin-bottom: 24px;
+  }
+  .paper-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 28px; }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    padding: 4px 10px;
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 2px;
+  }
+  .paper-links { display: flex; flex-wrap: wrap; gap: 20px; }
+  .paper-links a {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--accent);
+    padding-bottom: 2px;
+    transition: opacity 0.2s;
+  }
+  .paper-links a:hover { opacity: 0.7; }
+
+  /* ── LEDE / OVERVIEW ── */
+  .lede {
+    font-size: 1.18rem;
+    line-height: 1.8;
+    color: var(--ink);
+    margin-bottom: 1.2em;
+  }
+
+  /* ── FIGURES ── */
+  figure { margin: 32px 0; }
+  figure img, figure video {
+    width: 100%;
+    display: block;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: #fff;
+  }
+  figcaption {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    line-height: 1.7;
+    margin-top: 12px;
+  }
+  figcaption .fig-tag { color: var(--accent); }
+
+  /* ── METHOD STEPS ── */
+  .steps { counter-reset: step; margin: 36px 0 8px; }
+  .step {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 0 24px;
+    padding: 22px 0;
+    border-top: 1px solid var(--rule);
+  }
+  .step:last-child { border-bottom: 1px solid var(--rule); }
+  .step::before {
+    counter-increment: step;
+    content: counter(step, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    padding-top: 4px;
+  }
+  .step h3 { font-size: 1.05rem; font-weight: 500; margin-bottom: 4px; }
+  .step p { font-size: 0.92rem; line-height: 1.7; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 24px; margin: 24px 0 8px; }
+  .legend-item { display: flex; align-items: baseline; gap: 10px; font-family: var(--mono); font-size: 12px; color: var(--ink-muted); }
+  .legend-swatch { width: 11px; height: 11px; border-radius: 2px; position: relative; top: 1px; flex: none; }
+
+  /* ── TRACKING FILM ── */
+  .film {
+    background: var(--paper-warm);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 28px;
+    margin: 36px 0;
+  }
+  .film-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 16px; margin-bottom: 6px; flex-wrap: wrap;
+  }
+  .film-title { font-size: 1.08rem; font-weight: 500; color: var(--ink); }
+  .film-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .film-tag.anti { color: var(--anticyclone); }
+  .film-tag.cyc  { color: var(--cyclone); }
+  .film-sub { font-size: 0.9rem; color: var(--ink-muted); line-height: 1.7; margin-bottom: 18px; }
+  .film video { width: 100%; display: block; border: 1px solid var(--rule); border-radius: 3px; background: #fff; }
+  .film-caption {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-top: 12px;
+    line-height: 1.7;
+  }
+
+  /* ── STATS ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 36px 0;
+  }
+  .stat { background: var(--paper); padding: 22px 20px; }
+  .stat-num { font-size: 1.7rem; line-height: 1.2; color: var(--ink); }
+  .stat-num span { font-size: 0.95rem; color: var(--ink-faint); }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+
+  /* ── CITATION ── */
+  .bibtex {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--ink-muted);
+    background: var(--paper-warm);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 24px 28px;
+    overflow-x: auto;
+    white-space: pre;
+    margin-top: 24px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 40px 48px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    border-top: 1px solid var(--rule);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.6s ease both; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .fade-up { animation: none; }
+  }
+
+  @media (max-width: 680px) {
+    nav { padding: 0 20px; }
+    .container { padding-left: 20px; padding-right: 20px; }
+    .bibtex { padding: 16px; font-size: 11px; }
+    .paper-title { font-size: 1.9rem; }
+    .nav-links { display: none; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .film { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-name" href="index.html">H. Yadav</a>
+  <div class="nav-links">
+    <a href="index.html#home">Home</a>
+    <a href="index.html#research">Research</a>
+    <a href="#method">Method</a>
+    <a href="#tracking">Tracking</a>
+    <a href="#findings">Findings</a>
+    <a href="#cite">Cite</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ── HERO ── -->
+  <section id="top" class="container fade-up">
+    <div class="crumb"><a href="index.html#research">← Research</a> &nbsp;/&nbsp; Project 02</div>
+    <h1 class="paper-title">Topological Detection and Tracking of <em>Cyclones</em> and <em>Anticyclones</em></h1>
+    <div class="paper-authors"><strong>Himanshu Yadav</strong> · Gisela D. Charó · Davide Faranda</div>
+    <div class="paper-affil">
+      University of Florida · CONICET–UBA, CIMA &amp; IFAECI (Buenos Aires) · LSCE, Université Paris-Saclay &amp; IPSL · London Mathematical Laboratory
+    </div>
+    <div class="paper-meta">
+      <span class="badge">Submitted · Physica D: Nonlinear Phenomena</span>
+      <span class="badge">Topological Data Analysis</span>
+      <span class="badge">Atmospheric Science</span>
+    </div>
+    <div class="paper-links">
+      <a href="https://arxiv.org/abs/2511.19938" target="_blank" rel="noopener">arXiv:2511.19938 ↗</a>
+      <a href="https://arxiv.org/pdf/2511.19938" target="_blank" rel="noopener">PDF ↗</a>
+      <a href="#cite">BibTeX ↓</a>
+    </div>
+  </section>
+
+  <!-- ── OVERVIEW ── -->
+  <section class="container">
+    <div class="section-label">Overview</div>
+    <p class="lede">
+      A weather map is a landscape: low-pressure cyclones carve valleys, high-pressure
+      anticyclones raise ridges. This work reads that landscape with algebraic topology —
+      detecting storms and blocking highs as <em>loops</em> in the pressure field, and
+      following them through time without any hand-tuned feature-tracking heuristics.
+    </p>
+    <p>
+      We apply persistent homology to 76 years of daily sea-level pressure (SLP) anomalies
+      over the North Atlantic (22.5°N–70°N, 80°W–50°E; 1948–2023). Treating each daily
+      anomaly field as a grayscale image on a grid, we build cubical complexes and compute
+      sublevel- and superlevel-set filtrations. Persistent degree-1 features — 1-holes —
+      correspond to coherent atmospheric structures: the sublevel filtration captures
+      <em>1-anticyclones</em>, the superlevel filtration captures <em>1-cyclones</em>.
+    </p>
+    <figure>
+      <img src="assets/slp_anomalies.png" alt="Sea-level pressure anomalies over the North Atlantic on 31 December 2022, with blue cyclonic and red anticyclonic regions" loading="lazy" />
+      <figcaption><span class="fig-tag">Fig.</span> SLP anomalies over the North Atlantic (31 Dec 2022). Blue shading marks cyclonic regions; red marks anticyclonic regions. The interplay of these regions reflects the dynamics governing storm formation in the basin.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ── METHOD ── -->
+  <section id="method" class="container">
+    <div class="section-label">Method</div>
+    <h2>From pressure fields to persistence diagrams</h2>
+    <p>
+      The pipeline turns each day of atmospheric data into a topological summary, then
+      stitches the summaries into trajectories.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div>
+          <h3>Anomalies on a grid</h3>
+          <p>Daily SLP anomalies are computed by subtracting, for each calendar day, its 76-year mean — removing the seasonal trend and exposing transient structure.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Cubical complexes &amp; filtrations</h3>
+          <p>Each anomaly field is treated as intensities on a square grid, from which we build a cubical complex. Sweeping the pressure threshold upward (sublevel) or downward (superlevel) produces a filtration of the field.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Persistent 1-holes</h3>
+          <p>Persistent homology records when loops are born and when they fill in. Long-lived 1-holes in the sublevel filtration are 1-anticyclones; in the superlevel filtration they are 1-cyclones. Persistence — measured in hPa — quantifies each structure's intensity.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Tracking by optimal matching</h3>
+          <p>Consecutive persistence diagrams are linked by the optimal matching underlying the Wasserstein distance. Features with persistence below 10 hPa are discarded, and matches whose death squares are more than 1,000 km apart are rejected — leaving physically meaningful trajectories.</p>
+        </div>
+      </div>
+    </div>
+
+    <figure>
+      <img src="assets/method_synthetic.png" alt="Synthetic example: a sequence of gradient spots shrinking, illustrating how evolving features appear in the filtration" loading="lazy" />
+      <figcaption><span class="fig-tag">Fig.</span> Synthetic illustration: a sequence of evolving gradient spots of the kind the filtration detects and the matching follows through time.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ── TRACKING (signature) ── -->
+  <section id="tracking" class="container">
+    <div class="section-label">Tracking, day by day</div>
+    <p class="lede">
+      Watch the method run. Each frame pairs the anomaly map (left) with its persistence
+      diagram (right); the tracked feature is the orange star far above the diagonal,
+      and its representative loop is drawn on the map.
+    </p>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:#e8a33d"></span> tracked representative 1-cycle</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:#f2e34c; border:1px solid var(--rule)"></span> death square</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:#1a1a18"></span> other persistence pairs</div>
+    </div>
+
+    <div class="film">
+      <div class="film-head">
+        <span class="film-title">February 2012 European blocking event</span>
+        <span class="film-tag anti">1-anticyclone · sublevel filtration</span>
+      </div>
+      <p class="film-sub">
+        The blocking episode behind the exceptional 2012 snowfall over Rome. The tracked
+        1-anticyclone intensifies from 31 January, peaks at ~43 hPa persistence on
+        4 February, and weakens by 5 February — visible as the orange star pulling away
+        from, then falling back toward, the diagonal.
+      </p>
+      <video autoplay loop muted playsinline preload="metadata" aria-label="Animation of the February 2012 blocking event tracked by the sublevel-set filtration, 31 January to 5 February 2012">
+        <source src="assets/tracking_blocking_2012.mp4" type="video/mp4" />
+        <source src="assets/tracking_blocking_2012.webm" type="video/webm" />
+      </video>
+      <div class="film-caption">31 Jan → 5 Feb 2012 · six daily frames · SLP anomaly map with tracked loop (left) and persistence diagram (right)</div>
+    </div>
+
+    <div class="film">
+      <div class="film-head">
+        <span class="film-title">February 1964 cyclonic feature</span>
+        <span class="film-tag cyc">1-cyclone · superlevel filtration</span>
+      </div>
+      <p class="film-sub">
+        The same machinery applied to the superlevel-set filtration follows a winter
+        1-cyclone across three consecutive days, with its representative loop migrating
+        across the basin.
+      </p>
+      <video autoplay loop muted playsinline preload="metadata" aria-label="Animation of a cyclonic feature tracked by the superlevel-set filtration, 23 to 25 February 1964">
+        <source src="assets/tracking_cyclone_1964.mp4" type="video/mp4" />
+        <source src="assets/tracking_cyclone_1964.webm" type="video/webm" />
+      </video>
+      <div class="film-caption">23 → 25 Feb 1964 · three daily frames · superlevel-set filtration</div>
+    </div>
+  </section>
+
+  <!-- ── FINDINGS ── -->
+  <section id="findings" class="container">
+    <div class="section-label">Findings</div>
+    <h2>Cyclones dominate the topology of the North Atlantic</h2>
+    <p>
+      Across all 76 years, total persistence, lifetime, and feature counts show strong
+      winter maxima and summer minima — and cyclonic structures are consistently more
+      persistent, more numerous, and longer-lived than anticyclonic ones, in line with
+      the climatological dominance of the wintertime Icelandic Low.
+    </p>
+
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="stat-num">76 <span>yrs</span></div>
+        <div class="stat-label">Daily SLP anomalies, 1948–2023</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">94,169</div>
+        <div class="stat-label">1-cyclone trajectories (superlevel)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">38,221</div>
+        <div class="stat-label">1-anticyclone trajectories (sublevel)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">~160 <span>hPa</span></div>
+        <div class="stat-label">Winter peak of cyclonic total persistence</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">17 <span>days</span></div>
+        <div class="stat-label">Longest tracked trajectory</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">6,590 <span>km</span></div>
+        <div class="stat-label">Greatest distance traveled by one feature</div>
+      </div>
+    </div>
+
+    <figure>
+      <img src="assets/tp1_monthly.png" alt="Monthly averages of first-order total persistence for cyclones and anticyclones, 1948 to 2023, showing winter maxima and summer minima" loading="lazy" />
+      <figcaption><span class="fig-tag">Fig.</span> Monthly mean first-order total persistence, 1948–2023. Solid: 1-cyclones (superlevel); dotted: 1-anticyclones (sublevel). Cyclonic structures generate more persistent topological organization throughout the annual cycle.</figcaption>
+    </figure>
+
+    <h2 style="margin-top: 48px;">Blocking events have a topological signature</h2>
+    <p>
+      Atmospheric blocking — the quasi-stationary highs behind the February 2012 cold
+      spell and the August 2003 European heatwave — appears not as <em>more</em>
+      anticyclonic features, but as the emergence of a <em>few</em> exceptionally
+      persistent, spatially extensive 1-anticyclones, coexisting with many smaller,
+      dynamically active 1-cyclones. Maximum persistence peaks at the mature stage of
+      both events, while the Wasserstein distance between consecutive diagrams alternates
+      between phases of topological stability and rapid reorganization.
+    </p>
+
+    <figure>
+      <img src="assets/blocking_peak_2012.png" alt="SLP anomaly map on 4 February 2012 at the blocking peak, with the most persistent anticyclone and cyclone outlined" loading="lazy" />
+      <figcaption><span class="fig-tag">Fig.</span> Peak of the February 2012 block (4 Feb). Orange contour: the most persistent 1-anticyclone (≳40 hPa) over Southern Europe and the Mediterranean. Cyan contour: the most persistent 1-cyclone over Scandinavia and the Barents Sea. Yellow squares mark death squares.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="assets/pmax_2012.png" alt="Maximum persistence time series during the February 2012 blocking event" loading="lazy" />
+      <figcaption><span class="fig-tag">Fig.</span> Maximum persistence P<sub>max</sub> through the February 2012 episode — a pronounced peak marks the mature stage of the block.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="assets/trajectory_summaries.png" alt="Monthly summaries of cyclone and anticyclone trajectories: length, frequency, persistence, and area" loading="lazy" />
+      <figcaption><span class="fig-tag">Fig.</span> Monthly trajectory summaries — length, frequency, persistence, and convex-hull area — for 1-cyclones (left) and 1-anticyclones (right).</figcaption>
+    </figure>
+  </section>
+
+  <!-- ── CITE ── -->
+  <section id="cite" class="container">
+    <div class="section-label">Cite this work</div>
+    <p>
+      If you use this method or build on these results, please cite the preprint:
+    </p>
+    <div class="bibtex">@article{yadav2025topological,
+  title   = {Topological Detection and Tracking of
+             Cyclones and Anticyclones},
+  author  = {Yadav, Himanshu and Char{\'o}, Gisela D.
+             and Faranda, Davide},
+  journal = {arXiv preprint arXiv:2511.19938},
+  year    = {2025},
+  url     = {https://arxiv.org/abs/2511.19938}
+}</div>
+  </section>
+
+</main>
+
+<footer>
+  <a href="index.html">← back to himanshuydv.com</a> &nbsp;·&nbsp; © 2026 Himanshu Yadav
+</footer>
+
+</body>
+</html>
