@@ -4,6 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Topological Detection and Tracking of Cyclones and Anticyclones — Himanshu Yadav</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2710%27 fill=%27none%27 stroke=%27%232d4a3e%27 stroke-width=%275%27/%3E%3C/svg%3E" />
+<meta property="og:title" content="Topological Detection and Tracking of Cyclones and Anticyclones" />
+<meta property="og:description" content="Persistent homology detects and tracks North Atlantic cyclones and anticyclones as topological loops in 76 years of sea-level pressure data." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.himanshuydv.com/cyclones.html" />
+<meta property="og:image" content="https://www.himanshuydv.com/assets/blocking_peak_2012.png" />
+<meta name="twitter:card" content="summary_large_image" />
 <meta name="description" content="Persistent homology applied to North Atlantic sea-level pressure anomalies (1948–2023): detecting and tracking cyclonic and anticyclonic structures as topological loops." />
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
@@ -208,6 +215,106 @@
   .film-tag.cyc  { color: var(--cyclone); }
   .film-sub { font-size: 0.9rem; color: var(--ink-muted); line-height: 1.7; margin-bottom: 18px; }
   .film video { width: 100%; display: block; border: 1px solid var(--rule); border-radius: 3px; background: #fff; }
+  .player-controls {
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 14px;
+  }
+  .player-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    padding: 6px 14px;
+    cursor: pointer;
+    min-width: 76px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .player-btn:hover { background: var(--accent); color: var(--paper); }
+  .player-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .player-date {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink);
+    min-width: 92px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .player-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 3px;
+    background: var(--rule);
+    border-radius: 2px;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+  .player-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .player-slider::-moz-range-thumb {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .player-slider:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+  /* ── FILTRATION DEMO ── */
+  .demo {
+    background: var(--paper-warm);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 28px;
+    margin: 36px 0 8px;
+  }
+  .demo-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+  .demo-title { font-size: 1.08rem; font-weight: 500; color: var(--ink); }
+  .demo-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  .demo-sub { font-size: 0.9rem; color: var(--ink-muted); line-height: 1.7; margin-bottom: 18px; }
+  .demo canvas {
+    width: 100%;
+    display: block;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: #fff;
+  }
+  .demo-readout {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink);
+    min-width: 92px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .barcode { margin-top: 18px; }
+  .barcode svg { width: 100%; height: auto; display: block; }
+  .barcode-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+  }
+  .demo-status {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    line-height: 1.9;
+    margin-top: 14px;
+  }
+  .demo-status strong { color: var(--accent); font-weight: 500; }
   .film-caption {
     font-family: var(--mono);
     font-size: 11px;
@@ -327,16 +434,16 @@
   <section class="container">
     <div class="section-label">Overview</div>
     <p class="lede">
-      A weather map is a landscape: low-pressure cyclones carve valleys, high-pressure
-      anticyclones raise ridges. This work reads that landscape with algebraic topology —
-      detecting storms and blocking highs as <em>loops</em> in the pressure field, and
-      following them through time without any hand-tuned feature-tracking heuristics.
+      Cyclones and anticyclones leave a distinctive imprint on the sea-level pressure field.
+      This work reads that imprint with algebraic topology, detecting storms and blocking
+      highs as <em>loops</em> in the pressure field and following them through time without
+      any hand-tuned feature-tracking heuristics.
     </p>
     <p>
       We apply persistent homology to 76 years of daily sea-level pressure (SLP) anomalies
       over the North Atlantic (22.5°N–70°N, 80°W–50°E; 1948–2023). Treating each daily
       anomaly field as a grayscale image on a grid, we build cubical complexes and compute
-      sublevel- and superlevel-set filtrations. Persistent degree-1 features — 1-holes —
+      sublevel- and superlevel-set filtrations. Persistent degree-1 features, known as 1-holes,
       correspond to coherent atmospheric structures: the sublevel filtration captures
       <em>1-anticyclones</em>, the superlevel filtration captures <em>1-cyclones</em>.
     </p>
@@ -359,7 +466,7 @@
       <div class="step">
         <div>
           <h3>Anomalies on a grid</h3>
-          <p>Daily SLP anomalies are computed by subtracting, for each calendar day, its 76-year mean — removing the seasonal trend and exposing transient structure.</p>
+          <p>Daily SLP anomalies are computed by subtracting, for each calendar day, its 76-year mean. This removes the seasonal trend and exposes transient structure.</p>
         </div>
       </div>
       <div class="step">
@@ -371,21 +478,41 @@
       <div class="step">
         <div>
           <h3>Persistent 1-holes</h3>
-          <p>Persistent homology records when loops are born and when they fill in. Long-lived 1-holes in the sublevel filtration are 1-anticyclones; in the superlevel filtration they are 1-cyclones. Persistence — measured in hPa — quantifies each structure's intensity.</p>
+          <p>Persistent homology records when loops are born and when they fill in. Long-lived 1-holes in the sublevel filtration are 1-anticyclones; in the superlevel filtration they are 1-cyclones. Persistence, measured in hPa, quantifies each structure's intensity.</p>
         </div>
       </div>
       <div class="step">
         <div>
           <h3>Tracking by optimal matching</h3>
-          <p>Consecutive persistence diagrams are linked by the optimal matching underlying the Wasserstein distance. Features with persistence below 10 hPa are discarded, and matches whose death squares are more than 1,000 km apart are rejected — leaving physically meaningful trajectories.</p>
+          <p>Consecutive persistence diagrams are linked by the optimal matching underlying the Wasserstein distance. Features with persistence below 10 hPa are discarded, and matches whose death squares are more than 1,000 km apart are rejected. What remains are physically meaningful trajectories.</p>
         </div>
       </div>
     </div>
 
-    <figure>
-      <img src="assets/method_synthetic.png" alt="Synthetic example: a sequence of gradient spots shrinking, illustrating how evolving features appear in the filtration" loading="lazy" />
-      <figcaption><span class="fig-tag">Fig.</span> Synthetic illustration: a sequence of evolving gradient spots of the kind the filtration detects and the matching follows through time.</figcaption>
-    </figure>
+    <div class="demo">
+      <div class="demo-head">
+        <span class="demo-title">Sweep the filtration yourself</span>
+        <span class="demo-tag">interactive · sublevel filtration</span>
+      </div>
+      <p class="demo-sub">
+        A synthetic anomaly field with two highs: a strong one (40 hPa) and a weak one
+        (18 hPa). Drag the threshold upward and watch the sublevel set (green) flood the
+        field. When it encircles a high, a 1-hole is born; when the threshold passes the
+        peak, the hole fills and dies. The barcode below records each loop's lifespan.
+        Persistence is what separates the dominant structure from the minor one.
+      </p>
+      <canvas id="filt-canvas" width="924" height="616" role="img" aria-label="Synthetic pressure anomaly field flooded by the sublevel set as the threshold slider moves"></canvas>
+      <div class="player-controls">
+        <input class="player-slider" id="filt-slider" type="range" min="-25" max="45" value="-25" step="0.5" aria-label="Filtration threshold in hectopascals" />
+        <span class="demo-readout" id="filt-readout">t = &minus;25.0 hPa</span>
+      </div>
+      <div class="barcode">
+        <div class="barcode-label">Persistence barcode · H<sub>1</sub></div>
+        <svg id="filt-barcode" viewBox="0 0 700 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+      </div>
+      <div class="demo-status" id="filt-status"></div>
+    </div>
+
   </section>
 
   <!-- ── TRACKING (signature) ── -->
@@ -411,14 +538,21 @@
       <p class="film-sub">
         The blocking episode behind the exceptional 2012 snowfall over Rome. The tracked
         1-anticyclone intensifies from 31 January, peaks at ~43 hPa persistence on
-        4 February, and weakens by 5 February — visible as the orange star pulling away
-        from, then falling back toward, the diagonal.
+        4 February, and weakens by 5 February. Watch the orange star pull away from the
+        diagonal, then fall back toward it.
       </p>
-      <video autoplay loop muted playsinline preload="metadata" aria-label="Animation of the February 2012 blocking event tracked by the sublevel-set filtration, 31 January to 5 February 2012">
+      <video class="tracked-video" autoplay loop muted playsinline preload="metadata"
+             data-dates="2012-01-31,2012-02-01,2012-02-02,2012-02-03,2012-02-04,2012-02-05"
+             aria-label="Animation of the February 2012 blocking event tracked by the sublevel-set filtration, 31 January to 5 February 2012">
         <source src="assets/tracking_blocking_2012.mp4" type="video/mp4" />
         <source src="assets/tracking_blocking_2012.webm" type="video/webm" />
       </video>
-      <div class="film-caption">31 Jan → 5 Feb 2012 · six daily frames · SLP anomaly map with tracked loop (left) and persistence diagram (right)</div>
+      <div class="player-controls">
+        <button class="player-btn" type="button" aria-label="Pause animation">Pause</button>
+        <input class="player-slider" type="range" min="0" max="1000" value="0" step="1" aria-label="Scrub through days of the February 2012 blocking event" />
+        <span class="player-date" aria-live="polite">2012-01-31</span>
+      </div>
+      <div class="film-caption">31 Jan to 5 Feb 2012 · six daily frames · SLP anomaly map with tracked loop (left) and persistence diagram (right)</div>
     </div>
 
     <div class="film">
@@ -431,11 +565,18 @@
         1-cyclone across three consecutive days, with its representative loop migrating
         across the basin.
       </p>
-      <video autoplay loop muted playsinline preload="metadata" aria-label="Animation of a cyclonic feature tracked by the superlevel-set filtration, 23 to 25 February 1964">
+      <video class="tracked-video" autoplay loop muted playsinline preload="metadata"
+             data-dates="1964-02-23,1964-02-24,1964-02-25"
+             aria-label="Animation of a cyclonic feature tracked by the superlevel-set filtration, 23 to 25 February 1964">
         <source src="assets/tracking_cyclone_1964.mp4" type="video/mp4" />
         <source src="assets/tracking_cyclone_1964.webm" type="video/webm" />
       </video>
-      <div class="film-caption">23 → 25 Feb 1964 · three daily frames · superlevel-set filtration</div>
+      <div class="player-controls">
+        <button class="player-btn" type="button" aria-label="Pause animation">Pause</button>
+        <input class="player-slider" type="range" min="0" max="1000" value="0" step="1" aria-label="Scrub through days of the February 1964 cyclonic feature" />
+        <span class="player-date" aria-live="polite">1964-02-23</span>
+      </div>
+      <div class="film-caption">23 to 25 Feb 1964 · three daily frames · superlevel-set filtration</div>
     </div>
   </section>
 
@@ -445,7 +586,7 @@
     <h2>Cyclones dominate the topology of the North Atlantic</h2>
     <p>
       Across all 76 years, total persistence, lifetime, and feature counts show strong
-      winter maxima and summer minima — and cyclonic structures are consistently more
+      winter maxima and summer minima. Cyclonic structures are consistently more
       persistent, more numerous, and longer-lived than anticyclonic ones, in line with
       the climatological dominance of the wintertime Icelandic Low.
     </p>
@@ -477,15 +618,12 @@
       </div>
     </div>
 
-    <figure>
-      <img src="assets/tp1_monthly.png" alt="Monthly averages of first-order total persistence for cyclones and anticyclones, 1948 to 2023, showing winter maxima and summer minima" loading="lazy" />
-      <figcaption><span class="fig-tag">Fig.</span> Monthly mean first-order total persistence, 1948–2023. Solid: 1-cyclones (superlevel); dotted: 1-anticyclones (sublevel). Cyclonic structures generate more persistent topological organization throughout the annual cycle.</figcaption>
-    </figure>
+    
 
-    <h2 style="margin-top: 48px;">Blocking events have a topological signature</h2>
+    <h2 style="margin-top: 40px;">Blocking events have a topological signature</h2>
     <p>
-      Atmospheric blocking — the quasi-stationary highs behind the February 2012 cold
-      spell and the August 2003 European heatwave — appears not as <em>more</em>
+      Atmospheric blocking, the quasi-stationary highs behind the February 2012 cold
+      spell and the August 2003 European heatwave, appears not as <em>more</em>
       anticyclonic features, but as the emergence of a <em>few</em> exceptionally
       persistent, spatially extensive 1-anticyclones, coexisting with many smaller,
       dynamically active 1-cyclones. Maximum persistence peaks at the mature stage of
@@ -498,15 +636,9 @@
       <figcaption><span class="fig-tag">Fig.</span> Peak of the February 2012 block (4 Feb). Orange contour: the most persistent 1-anticyclone (≳40 hPa) over Southern Europe and the Mediterranean. Cyan contour: the most persistent 1-cyclone over Scandinavia and the Barents Sea. Yellow squares mark death squares.</figcaption>
     </figure>
 
-    <figure>
-      <img src="assets/pmax_2012.png" alt="Maximum persistence time series during the February 2012 blocking event" loading="lazy" />
-      <figcaption><span class="fig-tag">Fig.</span> Maximum persistence P<sub>max</sub> through the February 2012 episode — a pronounced peak marks the mature stage of the block.</figcaption>
-    </figure>
+    
 
-    <figure>
-      <img src="assets/trajectory_summaries.png" alt="Monthly summaries of cyclone and anticyclone trajectories: length, frequency, persistence, and area" loading="lazy" />
-      <figcaption><span class="fig-tag">Fig.</span> Monthly trajectory summaries — length, frequency, persistence, and convex-hull area — for 1-cyclones (left) and 1-anticyclones (right).</figcaption>
-    </figure>
+    
   </section>
 
   <!-- ── CITE ── -->
@@ -532,5 +664,218 @@
   <a href="index.html">← back to himanshuydv.com</a> &nbsp;·&nbsp; © 2026 Himanshu Yadav
 </footer>
 
+<script>
+  document.querySelectorAll('.tracked-video').forEach(function (video) {
+    var controls = video.parentElement.querySelector('.player-controls');
+    var btn = controls.querySelector('.player-btn');
+    var slider = controls.querySelector('.player-slider');
+    var dateEl = controls.querySelector('.player-date');
+    var dates = video.dataset.dates.split(',');
+
+    function frameDate(t, duration) {
+      if (!duration) return dates[0];
+      var i = Math.min(dates.length - 1, Math.floor((t / duration) * dates.length));
+      return dates[i];
+    }
+    function sync() {
+      if (!video.duration) return;
+      slider.value = Math.round((video.currentTime / video.duration) * 1000);
+      dateEl.textContent = frameDate(video.currentTime, video.duration);
+    }
+
+    video.addEventListener('timeupdate', sync);
+    video.addEventListener('loadedmetadata', sync);
+
+    slider.addEventListener('input', function () {
+      if (!video.duration) return;
+      video.pause();
+      btn.textContent = 'Play';
+      btn.setAttribute('aria-label', 'Play animation');
+      video.currentTime = (slider.value / 1000) * video.duration;
+      dateEl.textContent = frameDate(video.currentTime, video.duration);
+    });
+
+    btn.addEventListener('click', function () {
+      if (video.paused) {
+        video.play();
+        btn.textContent = 'Pause';
+        btn.setAttribute('aria-label', 'Pause animation');
+      } else {
+        video.pause();
+        btn.textContent = 'Play';
+        btn.setAttribute('aria-label', 'Play animation');
+      }
+    });
+
+    video.addEventListener('click', function () { btn.click(); });
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      video.removeAttribute('autoplay');
+      video.pause();
+      btn.textContent = 'Play';
+      btn.setAttribute('aria-label', 'Play animation');
+    }
+  });
+</script>
+<script>
+  (function () {
+    var canvas = document.getElementById('filt-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var slider = document.getElementById('filt-slider');
+    var readout = document.getElementById('filt-readout');
+    var statusEl = document.getElementById('filt-status');
+    var barcode = document.getElementById('filt-barcode');
+
+    // Synthetic SLP anomaly field on a coarse grid
+    var W = 132, H = 88;
+    var peaks = [
+      { name: 'Strong high', amp: 40, x: 0.30, y: 0.45, s: 0.012 },
+      { name: 'Weak high',   amp: 18, x: 0.72, y: 0.60, s: 0.010 }
+    ];
+    var low = { amp: -22, x: 0.60, y: 0.22, s: 0.016 };
+
+    var field = new Float32Array(W * H);
+    function g(ix, iy, c) {
+      var dx = ix / W - c.x, dy = iy / H - c.y;
+      return c.amp * Math.exp(-(dx * dx + dy * dy) / c.s);
+    }
+    var fmin = 1e9, fmax = -1e9;
+    for (var iy = 0; iy < H; iy++) for (var ix = 0; ix < W; ix++) {
+      var v = g(ix, iy, peaks[0]) + g(ix, iy, peaks[1]) + g(ix, iy, low)
+            + 2.2 * Math.sin(ix * 0.10) * Math.cos(iy * 0.13);
+      field[iy * W + ix] = v;
+      if (v < fmin) fmin = v;
+      if (v > fmax) fmax = v;
+    }
+    peaks.forEach(function (p) {
+      var ix = Math.round(p.x * W), iy = Math.round(p.y * H);
+      var best = -1e9, bi = ix, bj = iy;
+      for (var dy = -4; dy <= 4; dy++) for (var dx = -4; dx <= 4; dx++) {
+        var v = field[(iy + dy) * W + (ix + dx)];
+        if (v > best) { best = v; bi = ix + dx; bj = iy + dy; }
+      }
+      p.ci = bi; p.cj = bj; p.val = best;
+    });
+
+    // Hole alive test: peak cell unreachable from the border through cells > t
+    var visited = new Uint8Array(W * H);
+    var queue = new Int32Array(W * H);
+    function encircled(p, t) {
+      visited.fill(0);
+      var qn = 0;
+      function push(i) { if (!visited[i] && field[i] > t) { visited[i] = 1; queue[qn++] = i; } }
+      for (var x = 0; x < W; x++) { push(x); push((H - 1) * W + x); }
+      for (var y = 0; y < H; y++) { push(y * W); push(y * W + W - 1); }
+      for (var qi = 0; qi < qn; qi++) {
+        var i = queue[qi], ix = i % W, iy = (i / W) | 0;
+        if (ix > 0) push(i - 1);
+        if (ix < W - 1) push(i + 1);
+        if (iy > 0) push(i - W);
+        if (iy < H - 1) push(i + W);
+      }
+      return !visited[p.cj * W + p.ci];
+    }
+
+    // Birth thresholds by binary search (monotone in t)
+    peaks.forEach(function (p) {
+      var lo = fmin, hi = p.val;
+      for (var k = 0; k < 24; k++) {
+        var mid = (lo + hi) / 2;
+        if (encircled(p, mid)) hi = mid; else lo = mid;
+      }
+      p.birth = hi;
+      p.death = p.val;
+    });
+
+    // Diverging colormap for the base field
+    function color(v) {
+      if (v >= 0) {
+        var u = Math.min(1, v / fmax);
+        return [255 - 80 * u - 60 * u * u, 245 - 160 * u, 235 - 190 * u];
+      }
+      var u2 = Math.min(1, v / fmin);
+      return [235 - 190 * u2, 245 - 130 * u2, 255 - 60 * u2];
+    }
+
+    var off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    var offCtx = off.getContext('2d');
+    var img = offCtx.createImageData(W, H);
+
+    function draw(t) {
+      for (var i = 0; i < W * H; i++) {
+        var c = color(field[i]);
+        var r = c[0], gg = c[1], b = c[2];
+        if (field[i] <= t) {           // sublevel set tint
+          r = r * 0.35 + 45 * 0.65;
+          gg = gg * 0.35 + 74 * 0.65;
+          b = b * 0.35 + 62 * 0.65;
+        }
+        img.data[i * 4] = r; img.data[i * 4 + 1] = gg;
+        img.data[i * 4 + 2] = b; img.data[i * 4 + 3] = 255;
+      }
+      offCtx.putImageData(img, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
+
+      // Peak markers
+      peaks.forEach(function (p) {
+        var px = (p.ci + 0.5) / W * canvas.width, py = (p.cj + 0.5) / H * canvas.height;
+        ctx.beginPath();
+        ctx.arc(px, py, 6, 0, 7);
+        ctx.fillStyle = t >= p.val ? 'rgba(26,26,24,0.45)' : '#1a1a18';
+        ctx.fill();
+      });
+    }
+
+    function fmt(v) { return (v < 0 ? '\u2212' : '') + Math.abs(v).toFixed(1); }
+
+    function drawBarcode(t) {
+      var x0 = 10, x1 = 690, y = [30, 58], h = 12;
+      function X(v) { return x0 + (v + 25) / 70 * (x1 - x0); }
+      var s = '';
+      s += '<line x1="' + x0 + '" y1="74" x2="' + x1 + '" y2="74" stroke="rgba(26,26,24,0.25)" stroke-width="1"/>';
+      [-20, 0, 20, 40].forEach(function (v) {
+        s += '<text x="' + X(v) + '" y="83" font-size="9" fill="#9a9a90" text-anchor="middle" font-family="DM Mono, monospace">' + v + '</text>';
+      });
+      peaks.forEach(function (p, i) {
+        var bx = X(p.birth), dx = X(p.death);
+        s += '<rect x="' + bx + '" y="' + (y[i] - h / 2) + '" width="' + (dx - bx) + '" height="' + h + '" rx="2" fill="rgba(45,74,62,0.18)"/>';
+        var fillTo = Math.max(p.birth, Math.min(t, p.death));
+        if (fillTo > p.birth) {
+          s += '<rect x="' + bx + '" y="' + (y[i] - h / 2) + '" width="' + (X(fillTo) - bx) + '" height="' + h + '" rx="2" fill="#2d4a3e"/>';
+        }
+        s += '<text x="' + (bx - 6) + '" y="' + (y[i] + 3.5) + '" font-size="9.5" fill="#5c5c54" text-anchor="end" font-family="DM Mono, monospace">' + p.name + '</text>';
+      });
+      var tx = Math.max(x0, Math.min(x1, X(t)));
+      s += '<line x1="' + tx + '" y1="12" x2="' + tx + '" y2="74" stroke="#9a3b2e" stroke-width="1.5"/>';
+      s += '<text x="' + tx + '" y="9" font-size="9.5" fill="#9a3b2e" text-anchor="middle" font-family="DM Mono, monospace">t</text>';
+      barcode.innerHTML = s;
+    }
+
+    function status(t) {
+      var lines = peaks.map(function (p) {
+        if (t < p.birth) return p.name + ' (' + fmt(p.val) + ' hPa): no loop yet';
+        if (t < p.death) return '<strong>' + p.name + ' (' + fmt(p.val) + ' hPa): loop alive · persistence so far ' + fmt(t - p.birth) + ' hPa</strong>';
+        return p.name + ' (' + fmt(p.val) + ' hPa): loop filled · total persistence ' + fmt(p.death - p.birth) + ' hPa';
+      });
+      statusEl.innerHTML = lines.join('<br>');
+    }
+
+    function update() {
+      var t = parseFloat(slider.value);
+      readout.textContent = 't = ' + fmt(t) + ' hPa';
+      draw(t);
+      drawBarcode(t);
+      status(t);
+    }
+
+    slider.addEventListener('input', update);
+    update();
+  })();
+</script>
 </body>
 </html>

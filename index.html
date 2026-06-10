@@ -4,6 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Himanshu Yadav — Mathematics & TDA</title>
+<meta name="description" content="Himanshu Yadav. Mathematician working in topological data analysis: persistent homology, atmospheric science, and the science of science. Postdoc at the Carlson School of Management, University of Minnesota." />
+<meta property="og:title" content="Himanshu Yadav — Mathematics & TDA" />
+<meta property="og:description" content="Mathematical tools at the intersection of algebraic topology and data science." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://www.himanshuydv.com/" />
+<meta property="og:image" content="https://www.himanshuydv.com/photo.jpeg" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2710%27 fill=%27none%27 stroke=%27%232d4a3e%27 stroke-width=%275%27/%3E%3C/svg%3E" />
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -317,7 +325,12 @@
     margin-top: 14px;
     display: block;
     mix-blend-mode: multiply;
-    opacity: 0.92;
+    opacity: 0.92;;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  a:hover > .research-img, .research-item a .research-img:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(26,26,24,0.10);
   }
 
   /* ── CONFERENCES ── */
@@ -375,7 +388,7 @@
           <div class="hero-role fade-up">Postdoctoral Research Associate · Carlson School of Management · University of Minnesota</div>
           <h1 class="hero-title fade-up">Himanshu<br><em>Yadav</em></h1>
           <p class="hero-bio fade-up">
-            I develop mathematical tools at the intersection of algebraic topology and data science. My work uses <em>topological data analysis</em> to reveal hidden structure in complex systems — from North Atlantic weather dynamics to the evolution of scientific knowledge.
+            I develop mathematical tools at the intersection of algebraic topology and data science. My work uses <em>topological data analysis</em> to reveal hidden structure in complex systems, from North Atlantic weather dynamics to the evolution of scientific knowledge.
           </p>
           <p class="hero-bio fade-up" style="margin-top: 16px;">
             I completed my PhD in Mathematics at the University of Florida in May 2026, advised by <a href="https://people.clas.ufl.edu/peterbubenik/" style="color: var(--accent);">Peter Bubenik</a>. I am now a Postdoctoral Research Associate at the Carlson School of Management, University of Minnesota, working with <a href="https://carlsonschool.umn.edu/faculty/russell-funk" style="color: var(--accent);">Professor Russell Funk</a> on the mathematical and topological foundations of knowledge analysis in the science of science.
@@ -420,7 +433,7 @@
             We introduce the persistence heatmap, a parametrized summary built on representative cycles in persistence diagrams. Algorithms computing persistence diagrams produce representative cycles that are unstable to input perturbations; by averaging we produce chains with real-valued coefficients. We prove Lipschitz stability and uniform continuity, and use machine learning to learn a task-specific parametrization.
           </p>
           <a class="research-link" href="https://arxiv.org/abs/2510.12756" target="_blank">arXiv:2510.12756 ↗</a>
-          <br><img src="RP_double.png" alt="Persistence Heatmap figure" class="research-img" />
+          <br><img src="RP_double.png" loading="lazy" alt="Persistence Heatmap figure" class="research-img" />
         </div>
       </div>
 
@@ -437,7 +450,7 @@
           <a class="research-link" href="cyclones.html">Project page →</a>
           <span style="display:inline-block; width:14px;"></span>
           <a class="research-link" href="https://arxiv.org/abs/2511.19938" target="_blank">arXiv:2511.19938 ↗</a>
-          <br><a href="cyclones.html"><img src="global_projection_centered_at_zero.png" alt="Cyclonic-Anticyclonic interactions figure" class="research-img" /></a>
+          <br><a href="cyclones.html"><img src="global_projection_centered_at_zero.png" loading="lazy" alt="Cyclonic-Anticyclonic interactions figure" class="research-img" /></a>
         </div>
       </div>
 
@@ -452,7 +465,7 @@
             We use persistent homology and mixup barcodes to analyze the negative space among document embeddings, finding that publications occupying topological holes tend to be groundbreaking interdisciplinary work. This provides a citation-free measure of scientific novelty, consistent across different train/class distributions.
           </p>
           <a class="research-link" href="https://arxiv.org/abs/2510.14327" target="_blank">arXiv:2510.14327 ↗</a>
-          <br><img src="topic_embeddings_docs_cycle_145.png" alt="Mixup for Embedding Space figure" class="research-img" />
+          <br><img src="topic_embeddings_docs_cycle_145.png" loading="lazy" alt="Mixup for Embedding Space figure" class="research-img" />
         </div>
       </div>
 
